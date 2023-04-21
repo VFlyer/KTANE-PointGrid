@@ -1530,7 +1530,7 @@ GameObject:
   - component: {fileID: 114139553842080666}
   - component: {fileID: 114957580679927130}
   m_Layer: 0
-  m_Name: Template
+  m_Name: PointGrid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

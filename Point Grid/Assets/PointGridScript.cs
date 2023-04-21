@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using KModkit;
+using UnityEngine;
 using Rnd = UnityEngine.Random;
 
 public class PointGridScript : MonoBehaviour {
@@ -87,7 +87,7 @@ public class PointGridScript : MonoBehaviour {
         TopDirectionPositions[index]++;
         if (TopDirectionPositions[index] > 7)
             TopDirectionPositions[index] = 0;
-        TopTextMeshes[index].text = directionLabels[TopDirectionPositions[index]] + "";
+        TopTextMeshes[index].text = directionLabels[TopDirectionPositions[index]];
     }
     void RightPress(KMSelectable arrow)
     {
@@ -95,7 +95,7 @@ public class PointGridScript : MonoBehaviour {
         RightDirectionPositions[index]++;
         if (RightDirectionPositions[index] > 7)
             RightDirectionPositions[index] = 0;
-        RightTextMeshes[index].text = directionLabels[RightDirectionPositions[index]] + "";
+        RightTextMeshes[index].text = directionLabels[RightDirectionPositions[index]];
     }
     void Start () {
         GenerateSolution();
@@ -283,22 +283,100 @@ public class PointGridScript : MonoBehaviour {
         }
         GetComponent<KMBombModule>().HandlePass();
     }
-    void Update () {
 
-   }
+    // "i aint doin allat :skull:"
+    // isokey, kuro do it <3
 
-    //i aint doin allat :skull:
-    /*
 #pragma warning disable 414
-   private readonly string TwitchHelpMessage = @"Use !{0} to do something.";
+    private readonly string TwitchHelpMessage = @"Use '!{0} <arrow> <direction>' to set the state of an arrow | "
+                                                + "'!{0} submit' to submit the current state | Arrows are 1-12 in reading order; "
+                                                + "directions are u/ur/r/dr/d/dl/l/ul; chain commands with semicolons (;).";
 #pragma warning restore 414
 
-   IEnumerator ProcessTwitchCommand (string Command) {
-      yield return null;
-   }
+    private string[] _directions = new string[] { "U", "UR", "R", "DR", "D", "DL", "L", "UL" };
 
-   IEnumerator TwitchHandleForcedSolve () {
-      yield return null;
-   }
-    */
+    private IEnumerator ProcessTwitchCommand (string bigCommand) {
+        List<string> commands = bigCommand.Split(';').Select(com => com.Trim()).ToList();
+        bool submit = false;
+
+        if (commands.Count() > 13) {
+            yield return "sendtochaterror Too many commands! There is no need to send more than 13 commands.";
+        }
+
+        for (int i = 0; i < commands.Count(); i++) {
+            string commandAsUpper = commands[i].ToUpper();
+            if (commandAsUpper == string.Empty) {
+                yield return "sendtochaterror You cannot have any empty commands!";
+            }
+
+            if (commandAsUpper == "SUBMIT") {
+                if (commands.Count() != i + 1) {
+                    yield return "sendtochaterror There cannot be any commands after submitting";
+                }
+                else {
+                    commands.RemoveAt(commands.Count() - 1);
+                    submit = true;
+                }
+            }
+            else {
+                string[] splitCommand = commandAsUpper.Split(' ');
+                int arrowPosition;
+
+                if (splitCommand.Length != 2 || !int.TryParse(splitCommand[0], out arrowPosition) || !_directions.Contains(splitCommand[1])) {
+                    yield return "sendtochaterror '" + commands[i] + "' is not a valid command!";
+                }
+                else {
+                    commands[i] = arrowPosition + " " + Array.IndexOf(_directions, splitCommand[1]);
+                }
+            }
+        }
+        yield return null;
+
+        foreach (string command in commands) {
+            string[] splitCommand = command.Split(' ');
+            int position = int.Parse(splitCommand[0]) - 1;
+            int direction = int.Parse(splitCommand[1]);
+
+            KMSelectable arrowToPress;
+            TextMesh arrowText;
+
+            if (position >= 6) {
+                position -= 6;
+                arrowToPress = RightArrowSelectables[position];
+                arrowText = RightTextMeshes[position];
+            }
+            else {
+                arrowToPress = TopArrowSelectables[position];
+                arrowText = TopTextMeshes[position];
+            }
+
+            while (arrowText.text != directionLabels[direction]) {
+                arrowToPress.OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
+        }
+
+        if (submit) {
+            CheckButton.OnInteract();
+        }
     }
+
+    private IEnumerator TwitchHandleForcedSolve () {
+        yield return null;
+
+        for (int i = 0; i < 6; i++) {
+            while (TopTextMeshes[i].text != topSolution[i]) {
+                TopArrowSelectables[i].OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            while (RightTextMeshes[i].text != rightSolution[i]) {
+                RightArrowSelectables[i].OnInteract();
+                yield return new WaitForSeconds(0.1f);
+            }
+        }
+
+        CheckButton.OnInteract();
+    }
+
+}
