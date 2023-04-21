@@ -17,9 +17,10 @@ MonoBehaviour:
   description: 'I''m just trying to find the bathroom...
 
 
-    Manual (HTML): coming soon
+    Manual (HTML): https://ktane.timwi.de/HTML/Point%20Grid.html
 
-    Manual (PDF): coming soon (can also be found in your manual folder)'
+    Manual (PDF): https://ktane.timwi.de/PDF/Point%20Grid.pdf (can also be found in
+    your manual folder)'
   version: 
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 51275cd2f44300f4e9bdbe9fcf075f59, type: 3}
