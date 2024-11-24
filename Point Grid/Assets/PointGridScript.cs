@@ -16,7 +16,7 @@ public class PointGridScript : MonoBehaviour {
     int ModuleId;
     private bool ModuleSolved;
 
-    String[] directionLabels = { "↑", "↗", "→", "↘", "↓", "↙", "←", "↖" };
+    string[] directionLabels = { "↑", "↗", "→", "↘", "↓", "↙", "←", "↖", " " };
     private int[,] numberGrid = new int[6, 6]
     {
         { 0,0,0,0,0,0 },
@@ -40,8 +40,8 @@ public class PointGridScript : MonoBehaviour {
 
     public Material green;
 
-    String[] topSolution = new string[6];
-    String[] rightSolution = new string[6];
+    string[] topSolution = new string[6];
+    string[] rightSolution = new string[6];
    void Awake () {
       ModuleId = ModuleIdCounter++;
         /*
@@ -85,31 +85,34 @@ public class PointGridScript : MonoBehaviour {
     {
         int index = Array.IndexOf(TopArrowSelectables, arrow);
         TopDirectionPositions[index]++;
-        if (TopDirectionPositions[index] > 7)
+        if (TopDirectionPositions[index] > 8)
             TopDirectionPositions[index] = 0;
         TopTextMeshes[index].text = directionLabels[TopDirectionPositions[index]];
     }
     void RightPress(KMSelectable arrow)
     {
         int index = Array.IndexOf(RightArrowSelectables, arrow);
-        RightDirectionPositions[index]++;
-        if (RightDirectionPositions[index] > 7)
-            RightDirectionPositions[index] = 0;
+        RightDirectionPositions[index]--;
+        if (RightDirectionPositions[index] < 0)
+            RightDirectionPositions[index] = 8;
         RightTextMeshes[index].text = directionLabels[RightDirectionPositions[index]];
     }
     void Start () {
         GenerateSolution();
         Debug.LogFormat("[Point Grid #{0}] Top arrow solution: {1} {2} {3} {4} {5} {6}", ModuleId, TopTextMeshes[0].text, TopTextMeshes[1].text, TopTextMeshes[2].text, TopTextMeshes[3].text, TopTextMeshes[4].text, TopTextMeshes[5].text);
         Debug.LogFormat("[Point Grid #{0}] Right arrow solution: {1} {2} {3} {4} {5} {6}", ModuleId, RightTextMeshes[0].text, RightTextMeshes[1].text, RightTextMeshes[2].text, RightTextMeshes[3].text, RightTextMeshes[4].text, RightTextMeshes[5].text);
+        Debug.LogFormat("[Point Grid #{0}] Generated Grid:", ModuleId);
+        for (var x = 0; x < 6; x++)
+            Debug.LogFormat("[Point Grid #{0}] {1}", ModuleId, Enumerable.Range(0, 6).Select(a => numberGrid[x, a]).Join());
 
         for (int i = 0; i < 6; i++)
         {
             topSolution[i] = TopTextMeshes[i].text;
             rightSolution[i] = RightTextMeshes[i].text;
-            TopTextMeshes[i].text = directionLabels[4];
-            TopDirectionPositions[i] = 4;
-            RightTextMeshes[i].text = directionLabels[6];
-            RightDirectionPositions[i] = 6;
+            TopTextMeshes[i].text = directionLabels[8];
+            TopDirectionPositions[i] = 8;
+            RightTextMeshes[i].text = directionLabels[8];
+            RightDirectionPositions[i] = 8;
         }
         
    }
@@ -272,16 +275,17 @@ public class PointGridScript : MonoBehaviour {
         for (int i = 0; i < 6; i++)
         {
             TopArrowSelectables[i].GetComponent<MeshRenderer>().material = green;
-            TopTextMeshes[i].color = Color.white;
+            TopTextMeshes[i].color = Color.black;
             yield return new WaitForSeconds(0.1f);
         }
         for(int i = 0; i < 6; i++)
         {
             RightArrowSelectables[i].GetComponent<MeshRenderer>().material = green;
-            RightTextMeshes[i].color = Color.white;
+            RightTextMeshes[i].color = Color.black;
             yield return new WaitForSeconds(0.1f);
         }
         GetComponent<KMBombModule>().HandlePass();
+        ModuleSolved = true;
     }
 
     // "i aint doin allat :skull:"
@@ -322,7 +326,7 @@ public class PointGridScript : MonoBehaviour {
                 string[] splitCommand = commandAsUpper.Split(' ');
                 int arrowPosition;
 
-                if (splitCommand.Length != 2 || !int.TryParse(splitCommand[0], out arrowPosition) || !_directions.Contains(splitCommand[1])) {
+                if (splitCommand.Length != 2 || !int.TryParse(splitCommand[0], out arrowPosition) || arrowPosition > 12 || arrowPosition <= 0 || !_directions.Contains(splitCommand[1])) {
                     yield return "sendtochaterror '" + commands[i] + "' is not a valid command!";
                 }
                 else {
@@ -339,7 +343,6 @@ public class PointGridScript : MonoBehaviour {
 
             KMSelectable arrowToPress;
             TextMesh arrowText;
-
             if (position >= 6) {
                 position -= 6;
                 arrowToPress = RightArrowSelectables[position];
@@ -358,6 +361,7 @@ public class PointGridScript : MonoBehaviour {
 
         if (submit) {
             CheckButton.OnInteract();
+            yield return "solve";
         }
     }
 
@@ -377,6 +381,8 @@ public class PointGridScript : MonoBehaviour {
         }
 
         CheckButton.OnInteract();
+        while (!ModuleSolved)
+            yield return true;
     }
 
 }
